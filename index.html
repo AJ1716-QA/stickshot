@@ -40,7 +40,7 @@ button:active{transform:translateY(2px);box-shadow:0 3px 0 #8eaa31}.secondary{ba
 <canvas id="court" width="480" height="600" aria-label="Basketball court. Drag backward from the ball and release to shoot."></canvas>
 <div class="overlay" id="overlay"><div class="modal"><h1>BUCKET TIME!</h1><p>Drag back from the ball to aim and build power. Release to shoot. Score baskets, build streaks, and beat your best!</p><button id="start">PLAY NOW</button></div></div>
 </div>
-<div class="controls"><button class="secondary" id="sound">🔊 SOUND ON</button><button class="secondary" id="restart">↻ RESTART</button></div>
+<div class="controls"><button class="secondary" id="sound">🔊 SOUND ON</button><button class="secondary" id="bank">🎯 BANK: OFF</button><button class="secondary" id="restart">↻ RESTART</button></div>
 <p class="hint">🏀 DRAG BACK TO AIM · RELEASE TO SHOOT</p>
 <footer class="bottom"><span>STICKSHOT · STREET EDITION</span><span id="streak">STREAK ×0</span></footer>
 </main>
@@ -48,7 +48,7 @@ button:active{transform:translateY(2px);box-shadow:0 3px 0 #8eaa31}.secondary{ba
 (()=>{
 const c=document.getElementById('court'),ctx=c.getContext('2d'),$=id=>document.getElementById(id);
 const W=480,H=600,ground=520,ballStart={x:150,y:ground-24},gravity=.20;
-let running=false,score=0,lives=3,level=1,streak=0,ball=null,aim=null,dragStart=null,hoop={x:350,y:230},hoopDir=1,frame=0,soundOn=true,particles=[],message='',messageTimer=0,shootTimer=0,wind=0;
+let running=false,score=0,lives=3,level=1,streak=0,ball=null,aim=null,dragStart=null,hoop={x:350,y:230},hoopDir=1,frame=0,soundOn=true,particles=[],message='',messageTimer=0,shootTimer=0,wind=0,bankShot=false;
 let best=Number(localStorage.getItem('stickshot-best')||0);$('best').textContent=best;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const audio=(freq=520)=>{if(!soundOn)return;try{const A=audio.ac||(audio.ac=new(window.AudioContext||window.webkitAudioContext)()),o=A.createOscillator(),g=A.createGain();o.connect(g);g.connect(A.destination);o.frequency.value=freq;o.type='sine';g.gain.setValueAtTime(.08,A.currentTime);g.gain.exponentialRampToValueAtTime(.001,A.currentTime+.15);o.start();o.stop(A.currentTime+.16)}catch(e){}};
@@ -87,7 +87,7 @@ function paint(){
  if(ball)drawBall(ball.x,ball.y);else drawBall(ballStart.x,ballStart.y);
  if(aim&&!ball){
   ctx.strokeStyle='#fff';ctx.lineWidth=4;ctx.setLineDash([7,6]);ctx.beginPath();ctx.moveTo(ballStart.x,ballStart.y);ctx.lineTo(aim.x,aim.y);ctx.stroke();ctx.setLineDash([]);
-  const pullX=clamp(dragStart.x-aim.x,0,150),pullY=clamp(aim.y-dragStart.y,0,150),flight=clamp(40+pullY*.045,40,47),targetX=clamp(hoop.x+(aim.x-dragStart.x)*.10,hoop.x-12,hoop.x+12),targetY=hoop.y+2,vx=(targetX-ballStart.x)/flight,vy=(targetY-ballStart.y-gravity*flight*(flight-1)/2)/flight;
+  const pullY=clamp(aim.y-dragStart.y,0,150),targetY=hoop.y+2,flight=bankShot?38:clamp(40+pullY*.045,40,47),targetX=bankShot?hoop.x+38:clamp(hoop.x+(aim.x-dragStart.x)*.10,hoop.x-12,hoop.x+12),targetStartY=bankShot?hoop.y-35:targetY,vx=(targetX-ballStart.x)/flight,vy=(targetStartY-ballStart.y-gravity*flight*(flight-1)/2)/flight;
   ctx.fillStyle='#14213d';ctx.font='900 13px system-ui';ctx.textAlign='center';ctx.fillText('POWER '+Math.round((vx+Math.abs(vy))*4)+'%',240,565);
   // dotted preview arc
   ctx.fillStyle='#fff';for(let t=4;t<=24;t+=4){const px=ballStart.x+vx*t,py=ballStart.y+vy*t+.5*gravity*t*t;if(py>15&&py<ground) {ctx.beginPath();ctx.arc(px,py,3,0,Math.PI*2);ctx.fill()}}
@@ -112,7 +112,7 @@ function tick(){
   // Backboard collision: a real bank-shot rebound, not just decoration.
   const boardX=hoop.x+49,boardTop=hoop.y-77,boardBottom=hoop.y-8;
   if(ball.vx>0&&oldX+13<boardX&&ball.x+13>=boardX&&ball.y>boardTop-13&&ball.y<boardBottom+13){
-   ball.x=boardX-14;ball.vx=-Math.abs(ball.vx)*.62;ball.vy-=.7;audio(240);
+   ball.x=boardX-13;ball.vx=-(ball.x-hoop.x)/16;ball.vy=(ball.targetY-ball.y-gravity*16*15/2)/16;ball.banked=true;audio(240);message='BANK!';messageTimer=24;
   }
   // Count a basket only while descending through the rim opening.
   if(!ball.scored&&oldY<ball.targetY&&ball.y>=ball.targetY&&ball.vy>0){
@@ -130,15 +130,15 @@ c.addEventListener('pointermove',e=>{if(aim){aim=point(e);e.preventDefault()}});
 c.addEventListener('pointerup',e=>{
  if(!aim||!running)return;const p=point(e),pullX=clamp(dragStart.x-p.x,0,150),pullY=clamp(p.y-dragStart.y,0,150);
  // Solve the projectile equation for the basket, so every valid release has a reachable arc.
- const flight=clamp(40+pullY*.045,40,47);
- const targetX=clamp(hoop.x+(p.x-dragStart.x)*.10,hoop.x-12,hoop.x+12);
- const targetY=hoop.y+2;
+ const targetY=hoop.y+2,flight=bankShot?38:clamp(40+pullY*.045,40,47);
+ const targetX=bankShot?hoop.x+38:clamp(hoop.x+(p.x-dragStart.x)*.10,hoop.x-12,hoop.x+12);
+ const launchY=bankShot?hoop.y-35:targetY;
  const vx=(targetX-ballStart.x)/flight;
- const vy=(targetY-ballStart.y-gravity*flight*(flight-1)/2)/flight;
- ball={x:ballStart.x,y:ballStart.y,vx,vy,scored:false,targetX,targetY,flight,age:0};aim=null;dragStart=null;shootTimer=18;audio(520);e.preventDefault()
+ const vy=(launchY-ballStart.y-gravity*flight*(flight-1)/2)/flight;
+ ball={x:ballStart.x,y:ballStart.y,vx,vy,scored:false,targetX:hoop.x,targetY,flight,age:0,bankExpected:bankShot};aim=null;dragStart=null;shootTimer=18;audio(520);e.preventDefault()
 });
-$('start').onclick=()=>{reset();$('overlay').querySelector('h1').textContent='BUCKET TIME!';$('overlay').querySelector('p').textContent='Touch the ball, pull backward and slightly down, then release. Aim for the hoop or use the backboard for a bank shot!';$('start').textContent='PLAY NOW'};
-$('restart').onclick=()=>reset();$('sound').onclick=()=>{soundOn=!soundOn;$('sound').textContent=soundOn?'🔊 SOUND ON':'🔇 SOUND OFF'};
+$('start').onclick=()=>{reset();$('overlay').querySelector('h1').textContent='BUCKET TIME!';$('overlay').querySelector('p').textContent='Touch the ball, pull backward and slightly down, then release. Turn BANK ON to hit the backboard before the hoop.';$('start').textContent='PLAY NOW'};
+$('restart').onclick=()=>reset();$('sound').onclick=()=>{soundOn=!soundOn;$('sound').textContent=soundOn?'🔊 SOUND ON':'🔇 SOUND OFF'};$('bank').onclick=()=>{bankShot=!bankShot;$('bank').textContent=bankShot?'🎯 BANK: ON':'🎯 BANK: OFF';message=bankShot?'BANK SHOT READY':'DIRECT SHOT';messageTimer=35};
 hud();paint();requestAnimationFrame(tick);
 })();
 </script>
