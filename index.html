@@ -87,7 +87,7 @@ function paint(){
  if(ball)drawBall(ball.x,ball.y);else drawBall(ballStart.x,ballStart.y);
  if(aim&&!ball){
   ctx.strokeStyle='#fff';ctx.lineWidth=4;ctx.setLineDash([7,6]);ctx.beginPath();ctx.moveTo(ballStart.x,ballStart.y);ctx.lineTo(aim.x,aim.y);ctx.stroke();ctx.setLineDash([]);
-  const pullX=clamp(dragStart.x-aim.x,0,150),pullY=clamp(aim.y-dragStart.y,0,150),vx=clamp(4.5+pullX*.025,4.5,8.5),vy=-(8.5+pullY*.055);
+  const pullX=clamp(dragStart.x-aim.x,0,150),pullY=clamp(aim.y-dragStart.y,0,150),vx=clamp(1.8+pullX*.012,1.8,3.4),vy=-(8.5+pullY*.055);
   ctx.fillStyle='#14213d';ctx.font='900 13px system-ui';ctx.textAlign='center';ctx.fillText('POWER '+Math.round((vx+Math.abs(vy))*4)+'%',240,565);
   // dotted preview arc
   ctx.fillStyle='#fff';for(let t=4;t<=24;t+=4){const px=ballStart.x+vx*t,py=ballStart.y+vy*t+.5*gravity*t*t;if(py>15&&py<ground) {ctx.beginPath();ctx.arc(px,py,3,0,Math.PI*2);ctx.fill()}}
@@ -127,7 +127,7 @@ c.addEventListener('pointermove',e=>{if(aim){aim=point(e);e.preventDefault()}});
 c.addEventListener('pointerup',e=>{
  if(!aim||!running)return;const p=point(e),pullX=clamp(dragStart.x-p.x,0,150),pullY=clamp(p.y-dragStart.y,0,150);
  // Pulling back and slightly down sets forward speed and a higher arc.
- const vx=clamp(4.5+pullX*.025,4.5,8.5),vy=-(8.5+pullY*.055);
+ const vx=clamp(1.8+pullX*.012,1.8,3.4),vy=-(8.5+pullY*.055);
  ball={x:ballStart.x,y:ballStart.y,vx,vy,scored:false};aim=null;dragStart=null;shootTimer=18;audio(520);e.preventDefault()
 });
 $('start').onclick=()=>{reset();$('overlay').querySelector('h1').textContent='BUCKET TIME!';$('overlay').querySelector('p').textContent='Touch the ball, pull backward and slightly down, then release. Aim for the hoop or use the backboard for a bank shot!';$('start').textContent='PLAY NOW'};
