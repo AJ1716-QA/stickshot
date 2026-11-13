@@ -26,7 +26,7 @@ button:active{transform:translateY(2px);box-shadow:0 3px 0 #789b27}.secondary{ba
 .controls{display:flex;gap:9px}.controls button{flex:1;min-width:0;padding:12px 7px;font-size:12px}.hint{font-size:12px;color:#d2def4;text-align:center;margin:0;font-weight:800;letter-spacing:.25px}
 .bottom{display:flex;justify-content:space-between;align-items:center;color:#9eaccb;font-size:11px;padding:0 3px}
 @media(min-width:600px){body{padding:22px}.app{gap:14px}}
-</style></style>
+</style>
 </head>
 <body>
 <main class="app">
@@ -83,7 +83,7 @@ function drawCourt(){
  for(let i=-2;i<=2;i++){ctx.beginPath();ctx.moveTo(hoop.x+i*12,hoop.y+6);ctx.lineTo(hoop.x+i*8,hoop.y+40);ctx.stroke()}
  ctx.strokeStyle='#ffffff88';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(hoop.x-18,hoop.y+17);ctx.lineTo(hoop.x+18,hoop.y+17);ctx.moveTo(hoop.x-15,hoop.y+29);ctx.lineTo(hoop.x+15,hoop.y+29);ctx.stroke();
  ctx.fillStyle='#fff';ctx.font='900 12px system-ui';ctx.textAlign='left';ctx.fillText('WIND '+(wind>=0?'+':'')+wind.toFixed(1),16,27);
-}}function stick(x,y,pose='idle'){
+}function stick(x,y,pose='idle'){
  ctx.save();ctx.translate(x,y);ctx.lineCap='round';ctx.lineJoin='round';
  ctx.fillStyle='#211d3155';ctx.beginPath();ctx.ellipse(0,2,31,7,0,0,Math.PI*2);ctx.fill();
  // shoes and bent legs
@@ -101,7 +101,7 @@ function drawCourt(){
  ctx.strokeStyle='#f3bd91';ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(10,-54);ctx.lineTo(18+lift*5,-43-lift*10);ctx.lineTo(24+lift*5,-34-lift*24);ctx.stroke();
  ctx.strokeStyle='#17243c';ctx.lineWidth=11;ctx.beginPath();ctx.moveTo(-10,-54);ctx.lineTo(-24,-34);ctx.stroke();ctx.strokeStyle='#f3bd91';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(-10,-54);ctx.lineTo(-24,-34);ctx.stroke();
  ctx.restore();
-}}function drawBall(x,y,r=13){ctx.save();ctx.shadowColor='#241a22bb';ctx.shadowBlur=10;ctx.shadowOffsetY=5;const g=ctx.createRadialGradient(x-5,y-7,1,x,y,r);g.addColorStop(0,'#ffd18a');g.addColorStop(.38,'#ff9a3f');g.addColorStop(.82,'#e65f1f');g.addColorStop(1,'#873315');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='#71391f';ctx.lineWidth=1.8;ctx.stroke();ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(x-r,y);ctx.lineTo(x+r,y);ctx.moveTo(x,y-r);ctx.lineTo(x,y+r);ctx.stroke();ctx.beginPath();ctx.arc(x,y,r*.72,-1.15,1.15);ctx.stroke();ctx.restore()}function paint(){
+}function drawBall(x,y,r=13){ctx.save();ctx.shadowColor='#241a22bb';ctx.shadowBlur=10;ctx.shadowOffsetY=5;const g=ctx.createRadialGradient(x-5,y-7,1,x,y,r);g.addColorStop(0,'#ffd18a');g.addColorStop(.38,'#ff9a3f');g.addColorStop(.82,'#e65f1f');g.addColorStop(1,'#873315');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='#71391f';ctx.lineWidth=1.8;ctx.stroke();ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(x-r,y);ctx.lineTo(x+r,y);ctx.moveTo(x,y-r);ctx.lineTo(x,y+r);ctx.stroke();ctx.beginPath();ctx.arc(x,y,r*.72,-1.15,1.15);ctx.stroke();ctx.restore()}function paint(){
  ctx.clearRect(0,0,W,H);drawCourt();
  const pose=shootTimer>8?'shoot':shootTimer>0?'follow':aim?'windup':'idle';stick(115,ground,pose);
  if(ball)drawBall(ball.x,ball.y);else drawBall(ballStart.x,ballStart.y);
@@ -157,7 +157,8 @@ c.addEventListener('pointerup',e=>{
  const vy=(launchY-ballStart.y-gravity*flight*(flight-1)/2)/flight-(pullY-85)*.025;
  ball={x:ballStart.x,y:ballStart.y,vx,vy,scored:false,targetX:hoop.x,targetY,flight,age:0,bankExpected:bankShot,banked:false};aim=null;dragStart=null;shootTimer=18;audio(520);e.preventDefault()
 });
-c.addEventListener('pointercancel',()=>{aim=null;dragStart=null});\n$('start').onclick$('start').onclick=()=>{reset();$('overlay').querySelector('h1').textContent='BUCKET TIME!';$('overlay').querySelector('p').textContent='Touch the ball, pull backward and slightly down, then release. Turn BANK ON to hit the backboard before the hoop.';$('start').textContent='PLAY NOW'};
+c.addEventListener('pointercancel',()=>{aim=null;dragStart=null});
+$('start').onclick=()=>{reset();$('overlay').querySelector('h1').textContent='BUCKET TIME!';$('overlay').querySelector('p').textContent='Touch the ball, pull backward and slightly down, then release. Turn BANK ON to hit the backboard before the hoop.';$('start').textContent='PLAY NOW'};
 $('restart').onclick=()=>reset();$('sound').onclick=()=>{soundOn=!soundOn;$('sound').textContent=soundOn?'🔊 SOUND ON':'🔇 SOUND OFF'};$('bank').onclick=()=>{bankShot=!bankShot;$('bank').textContent=bankShot?'🎯 BANK: ON':'🎯 BANK: OFF';message=bankShot?'BANK SHOT READY':'DIRECT SHOT';messageTimer=35};
 hud();paint();requestAnimationFrame(tick);
 })();
